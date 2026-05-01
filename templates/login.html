@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Login - Team Tracker{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Ethara.ai</h1>
+        <p class="auth-subtitle">Smart Work Management System</p>
+        
+        <form method="POST" action="{{ url_for('auth.login') }}" onsubmit="return validateLogin()">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter password">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-full">Log In</button>
+        </form>
+        
+        <p class="auth-footer">
+            Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up here</a>
+        </p>
+    </div>
+</div>
+<script>
+function validateLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if (!email || !password) {
+        alert("Please fill in both email and password.");
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Projects - Ethara.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Projects</h1>
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">+ Create Project</a>
+    {% endif %}
+</div>
+
+{% if projects %}
+<div class="project-cards">
+    {% for project in projects %}
+    {% set is_member = current_user in project.members %}
+    <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="project-card-link">
+        <div class="project-card {% if not is_member and not current_user.is_admin() %}project-card-readonly{% endif %}">
+            {% if not is_member and not current_user.is_admin() %}
+            <span class="view-only-tag">View Only</span>
+            {% endif %}
+            <h3>{{ project.name }}</h3>
+            <p>{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</p>
+            
+            <!-- Member avatars -->
+            <div class="project-members-row">
+                {% for member in project.members[:4] %}
+                <span class="mini-avatar" title="{{ member.username }}">{{ member.username[0]|upper }}</span>
+                {% endfor %}
+                {% if project.members|length > 4 %}
+                <span class="mini-avatar mini-avatar-more">+{{ project.members|length - 4 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="project-meta">
+                <span>📋 {{ project.tasks|length }} tasks</span>
+                <span>👥 {{ project.members|length }} members</span>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No projects yet.</p>
+    {% if current_user.is_admin() %}
+    <p>Click "Create Project" to get started!</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

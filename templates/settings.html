@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Settings - Ethara.ai{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <h1>⚙️ Settings</h1>
+    <p class="welcome-text">Manage your account and preferences</p>
+
+    <div class="settings-grid">
+        <!-- Profile Section -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2>👤 Profile</h2>
+            </div>
+            <form method="POST" action="{{ url_for('settings.update_profile') }}">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <div style="padding: 10px 0;">
+                        <span class="role-badge {% if current_user.is_admin() %}badge-admin{% else %}badge-member{% endif %}" style="font-size: 0.85rem; padding: 5px 14px;">
+                            {{ current_user.role|upper }}
+                        </span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+
+        <!-- Security Section -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2>🔐 Security</h2>
+            </div>
+            <form method="POST" action="{{ url_for('settings.change_password') }}">
+                <div class="form-group">
+                    <label for="old_password">Current Password</label>
+                    <input type="password" id="old_password" name="old_password" required placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" required placeholder="Min 6 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-enter new password">
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2>🔔 Notifications</h2>
+            </div>
+            <form method="POST" action="{{ url_for('settings.update_notifications') }}">
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <span class="toggle-text">
+                            <strong>Email Notifications</strong>
+                            <small>Receive updates via email</small>
+                        </span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_email" {% if current_user.notify_email %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <span class="toggle-text">
+                            <strong>Task Updates</strong>
+                            <small>Get notified when tasks change</small>
+                        </span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_tasks" {% if current_user.notify_tasks %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Preferences</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

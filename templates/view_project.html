@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} - Ethara.ai{% endblock %}
+
+{% block content %}
+<div class="project-detail">
+    <div class="page-header">
+        <div>
+            <h1>{{ project.name }}</h1>
+            <p class="project-desc">{{ project.description or 'No description' }}</p>
+            {% if not is_member %}
+            <span class="view-only-tag" style="margin-top: 0.5rem; display: inline-block;">👁 View Only</span>
+            {% endif %}
+        </div>
+        <div class="header-actions">
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('tasks.create_task', project_id=project.id) }}" class="btn btn-primary">+ Add Task</a>
+            <form method="POST" action="{{ url_for('projects.delete_project', project_id=project.id) }}" style="display:inline" 
+                  onsubmit="return confirm('Delete this project and all its tasks?')">
+                <button type="submit" class="btn btn-danger">Delete Project</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Members Section -->
+    <div class="section">
+        <h2>Team Members ({{ project.members|length }})</h2>
+        <div class="member-list">
+            {% for member in project.members %}
+            <span class="member-tag">
+                <span class="mini-avatar" style="width:28px;height:28px;font-size:0.75rem;">{{ member.username[0]|upper }}</span>
+                {{ member.username }}
+                <span class="role-badge {% if member.is_admin() %}badge-admin{% else %}badge-member{% endif %}">
+                    {{ member.role|upper }}
+                </span>
+            </span>
+            {% endfor %}
+        </div>
+        
+        {% if current_user.is_admin() %}
+        <form method="POST" action="{{ url_for('projects.add_member', project_id=project.id) }}" class="add-member-form">
+            <select name="user_id" required>
+                <option value="">-- Add a member --</option>
+                {% set member_ids = project.members | map(attribute='id') | list %}
+                {% for user in all_users if user.id not in member_ids %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-small btn-primary">+ Add</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Tasks -->
+    <div class="section">
+        <h2>Tasks ({{ tasks|length }})</h2>
+        
+        {% if tasks %}
+        <table class="task-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Assigned To</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    {% if is_member %}
+                    <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="{% if task.is_overdue() %}row-overdue{% endif %}">
+                    <td>
+                        <strong>{{ task.title }}</strong>
+                        {% if task.description %}
+                        <br><small class="task-desc">{{ task.description[:60] }}{% if task.description|length > 60 %}...{% endif %}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if task.assignee %}
+                        <span class="assigned-label">{{ task.assignee.username }}</span>
+                        {% else %}
+                        <span class="no-date">Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="priority-badge priority-{{ task.priority or 'medium' }}">
+                            {% if task.priority == 'high' %}🔴{% elif task.priority == 'low' %}🟢{% else %}🟡{% endif %}
+                            {{ (task.priority or 'medium')|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ task.status }}">{{ task.status_display() }}</span>
+                    </td>
+                    <td>
+                        {% if task.due_date %}
+                            {{ task.due_date.strftime('%b %d, %Y') }}
+                            {% if task.is_overdue() %}<span class="overdue-tag">OVERDUE</span>{% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    {% if is_member %}
+                    <td class="actions-cell">
+                        {% if current_user.is_admin() or task.assigned_to == current_user.id %}
+                        <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}" class="inline-form">
+                            <input type="hidden" name="next" value="{{ url_for('projects.view_project', project_id=project.id) }}">
+                            <select name="status" class="status-select" onchange="this.form.submit()">
+                                <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </form>
+                        {% endif %}
+                        
+                        {% if current_user.is_admin() %}
+                        <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}" class="inline-form"
+                              onsubmit="return confirm('Delete this task?')">
+                            <button type="submit" class="btn-delete" title="Delete task">✕</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No tasks in this project yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Tasks - Ethara.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if current_user.is_admin() %}All Tasks{% else %}My Tasks{% endif %}</h1>
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('tasks.create_task') }}" class="btn btn-primary">+ Create Task</a>
+    {% endif %}
+</div>
+
+{% if tasks %}
+<table class="task-table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Project</th>
+            <th>Assigned To</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Due Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr class="{% if task.is_overdue() %}row-overdue{% endif %}">
+            <td><strong>{{ task.title }}</strong></td>
+            <td>
+                <a href="{{ url_for('projects.view_project', project_id=task.project_id) }}">
+                    {{ task.project.name }}
+                </a>
+            </td>
+            <td>{{ task.assignee.username if task.assignee else 'Unassigned' }}</td>
+            <td>
+                <span class="priority-badge priority-{{ task.priority or 'medium' }}">
+                    {% if task.priority == 'high' %}🔴{% elif task.priority == 'low' %}🟢{% else %}🟡{% endif %}
+                    {{ (task.priority or 'medium')|capitalize }}
+                </span>
+            </td>
+            <td>
+                <span class="status-badge status-{{ task.status }}">{{ task.status_display() }}</span>
+            </td>
+            <td>
+                {% if task.due_date %}
+                    {{ task.due_date.strftime('%b %d, %Y') }}
+                    {% if task.is_overdue() %}<span class="overdue-tag">OVERDUE</span>{% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td class="actions-cell">
+                {% if current_user.is_admin() or task.assigned_to == current_user.id %}
+                <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}" class="inline-form">
+                    <select name="status" class="status-select" onchange="this.form.submit()">
+                        <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <p>No tasks found.</p>
+    {% if not current_user.is_admin() %}
+    <p>Tasks assigned to you will show up here.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
