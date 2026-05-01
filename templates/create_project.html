@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Create Project - Team Tracker{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <h1>Create New Project</h1>
+    
+    <form method="POST" class="main-form">
+        <div class="form-group">
+            <label for="name">Project Name *</label>
+            <input type="text" id="name" name="name" required placeholder="e.g. Website Redesign">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="3" placeholder="Brief project description..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Add Team Members</label>
+            <div class="member-checkboxes">
+                {% for user in users %}
+                    {% if user.id != current_user.id %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="members" value="{{ user.id }}">
+                        {{ user.username }} ({{ user.role }})
+                    </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% if users|length <= 1 %}
+            <small class="hint-text">No other users yet. They can be added later.</small>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Project</button>
+            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Ethara.ai{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Dashboard</h1>
+    <p class="welcome-text">Hey {{ current_user.username }}! Here's your overview.</p>
+    
+    <!-- Stats Cards with Icons -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ total }}</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+        </div>
+        <div class="stat-card stat-completed">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ completed }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+        <div class="stat-card stat-progress">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ in_progress }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+        </div>
+        <div class="stat-card stat-overdue">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ overdue }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Tracking -->
+    <div class="section progress-section">
+        <h2>Overall Progress</h2>
+        <div class="progress-container">
+            {% set total_completed = completed %}
+            {% set total_tasks = total %}
+            {% set percent = (total_completed / total_tasks * 100)|int if total_tasks > 0 else 0 %}
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: {{ percent }}%;"></div>
+            </div>
+            <p class="progress-text">{{ percent }}% Work Completed ({{ total_completed }} / {{ total_tasks }} Tasks)</p>
+        </div>
+    </div>
+
+    <!-- Project-wise Task Distribution -->
+    {% if projects %}
+    <div class="section distribution-section">
+        <h2>Task Distribution by Project</h2>
+        <div class="distribution-chart">
+            {% for project in projects %}
+            {% set proj_total = project.tasks|length %}
+            {% set proj_done = project.tasks|selectattr('status', 'equalto', 'completed')|list|length %}
+            <div class="dist-row">
+                <div class="dist-label">
+                    <span class="dist-name">{{ project.name }}</span>
+                    <span class="dist-count">{{ proj_done }}/{{ proj_total }}</span>
+                </div>
+                <div class="dist-bar-bg">
+                    <div class="dist-bar-fill" style="width: {{ (proj_done / proj_total * 100)|int if proj_total > 0 else 0 }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions (admin only) -->
+    {% if current_user.is_admin() %}
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">+ New Project</a>
+        <a href="{{ url_for('tasks.create_task') }}" class="btn btn-secondary">+ New Task</a>
+    </div>
+    {% endif %}
+
+    <!-- Recent Tasks with Priority -->
+    <div class="section">
+        <h2>Recent Tasks</h2>
+        {% if recent_tasks %}
+        <table class="task-table">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Project</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in recent_tasks %}
+                <tr class="{% if task.is_overdue() %}row-overdue{% endif %}">
+                    <td>{{ task.title }}</td>
+                    <td>{{ task.project.name }}</td>
+                    <td>
+                        <span class="priority-badge priority-{{ task.priority or 'medium' }}">
+                            {% if task.priority == 'high' %}🔴{% elif task.priority == 'low' %}🟢{% else %}🟡{% endif %}
+                            {{ (task.priority or 'medium')|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ task.status }}">{{ task.status_display() }}</span>
+                    </td>
+                    <td>
+                        {% if task.due_date %}
+                            {{ task.due_date.strftime('%b %d, %Y') }}
+                            {% if task.is_overdue() %}<span class="overdue-tag">OVERDUE</span>{% endif %}
+                        {% else %}
+                            <span class="no-date">No date</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No tasks yet. {% if current_user.is_admin() %}Create a project first!{% endif %}</p>
+        {% endif %}
+    </div>
+
+    <!-- Projects Overview -->
+    <div class="section">
+        <h2>Your Projects</h2>
+        {% if projects %}
+        <div class="project-cards">
+            {% for project in projects %}
+            <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="project-card-link">
+                <div class="project-card">
+                    <h3>{{ project.name }}</h3>
+                    <p>{{ project.description[:80] }}{% if project.description|length > 80 %}...{% endif %}</p>
+                    <div class="project-meta">
+                        <span>{{ project.tasks|length }} tasks</span>
+                        <span>{{ project.members|length }} members</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No projects found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
