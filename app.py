@@ -172,6 +172,7 @@ def _create_default_admin(app):
         db.session.commit()
         print("Created default admin account")
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True, port=5000)
