@@ -8,10 +8,16 @@ def create_app():
     # config stuff
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-this')
     
-    # Check for DATABASE_URL first, then Vercel's POSTGRES_URL, otherwise fallback to SQLite
-    db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL', 'sqlite:///teamtracker.db')
-    if db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    # Check for DATABASE_URL first, then Vercel's POSTGRES_URL
+    db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
+    
+    if db_url:
+        if db_url.startswith('postgres://'):
+            db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    else:
+        # Vercel's file system is read-only except for the /tmp directory.
+        # If no Postgres database is linked, we MUST use /tmp for SQLite to prevent crashes.
+        db_url = 'sqlite:////tmp/teamtracker.db'
         
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
