@@ -119,15 +119,6 @@ http://127.0.0.1:5000
 
 ---
 
-## 🔑 Default Admin Credentials
-
-| Field | Value |
-|-------|-------|
-| Email | `admin@teamtracker.com` |
-| Password | `admin123` |
-
----
-
 ## 📸 Screenshots
 
 > Screenshots can be added after running the app locally.
