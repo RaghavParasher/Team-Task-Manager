@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Ethara.ai{% endblock %}</title>
+    <title>{% block title %}TaskPulse{% endblock %}</title>
     <meta name="description" content="Smart work management system">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +14,40 @@
     {% if current_user.is_authenticated %}
     <nav class="navbar">
         <div class="nav-brand">
-            <a href="{{ url_for('dashboard.dashboard') }}">✨ Ethara.ai</a>
+            <a href="{{ url_for('dashboard.dashboard') }}">✨ TaskPulse</a>
         </div>
         <div class="nav-links">
             <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
             <a href="{{ url_for('projects.list_projects') }}">Projects</a>
             <a href="{{ url_for('tasks.list_tasks') }}">Tasks</a>
             <a href="{{ url_for('team.team_page') }}">Team</a>
+            <!-- Notifications Bell & Dropdown -->
+            <div class="nav-notifications" style="position: relative; margin-right: 15px; cursor: pointer; display: inline-block;">
+                <span onclick="toggleNotifications(event)" style="font-size: 1.2rem;">🔔</span>
+                <span class="badge" id="notif-badge" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; {% if current_user.notifications|selectattr('is_read', 'equalto', false)|list|length == 0 %}display: none;{% endif %}">
+                    {{ current_user.notifications|selectattr('is_read', 'equalto', false)|list|length }}
+                </span>
+                
+                <div id="notif-dropdown" style="display: none; position: absolute; right: 0; top: 30px; width: 280px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; max-height: 250px; overflow-y: auto; padding: 10px;">
+                    <div style="font-weight: 600; font-size: 0.9rem; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Notifications</span>
+                        <span onclick="markAllRead()" style="font-size: 0.75rem; color: #4f46e5; cursor: pointer;">Mark all read</span>
+                    </div>
+                    <div id="notif-items" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                        {% set unread_notifs = current_user.notifications|selectattr('is_read', 'equalto', false)|list %}
+                        {% if unread_notifs %}
+                            {% for notif in unread_notifs[:5] %}
+                                <div style="font-size: 0.8rem; padding: 6px; background: #f9fafb; border-radius: 4px; color: #374151;">
+                                    {{ notif.message }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="font-size: 0.8rem; color: #9ca3af; text-align: center; padding: 10px;">No new notifications</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-divider"></span>
             <span class="nav-user">
                 {{ current_user.username }} 
@@ -56,5 +83,26 @@
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script>
+        function toggleNotifications(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notif-dropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function markAllRead() {
+            fetch('/notifications/read', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('notif-badge').style.display = 'none';
+                document.getElementById('notif-items').innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af; text-align: center; padding: 10px;">No new notifications</div>';
+            });
+        }
+        
+        document.addEventListener('click', function() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown) dropdown.style.display = 'none';
+        });
+    </script>
 </body>
 </html>

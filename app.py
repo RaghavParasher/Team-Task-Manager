@@ -1,6 +1,13 @@
 from flask import Flask, redirect, url_for, render_template_string
 from extensions import db, login_manager
+from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import os
+
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
 
 def create_app():
     app = Flask(__name__)
@@ -17,14 +24,18 @@ def create_app():
     else:
         # Vercel's file system is read-only except for the /tmp directory.
         # If no Postgres database is linked, we MUST use /tmp for SQLite to prevent crashes.
-        db_url = 'sqlite:////tmp/teamtracker.db'
+        db_url = 'sqlite:////tmp/taskpulse.db'
         
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['WTF_CSRF_ENABLED'] = False  # Set to True once CSRF tokens are added to all templates
     
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+    migrate = Migrate(app, db)
+    csrf.init_app(app)
+    limiter.init_app(app)
     
     # import models so they get registered
     from models import User
@@ -84,7 +95,7 @@ ERROR_PAGE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ code }} - Ethara.ai</title>
+    <title>{{ code }} - TaskPulse</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -167,10 +178,10 @@ def _create_default_admin(app):
     from models import User
     from werkzeug.security import generate_password_hash
     
-    if not User.query.filter_by(email='admin@teamtracker.com').first():
+    if not User.query.filter_by(email='admin@taskpulse.com').first():
         admin = User(
             username='admin',
-            email='admin@teamtracker.com',
+            email='admin@taskpulse.com',
             password_hash=generate_password_hash('admin123'),
             role='admin'
         )

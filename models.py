@@ -57,14 +57,18 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, default='')
-    status = db.Column(db.String(20), default='pending')  # pending, in_progress, completed
-    priority = db.Column(db.String(20), default='medium') # low, medium, high
+    status = db.Column(db.String(20), default='pending', index=True)  # pending, in_progress, completed
+    priority = db.Column(db.String(20), default='medium', index=True) # low, medium, high
     due_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # foreign keys
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
-    assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False, index=True)
+    assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
+    
+    # relationships
+    comments = db.relationship('TaskComment', backref='task', lazy=True, cascade='all, delete-orphan')
     
     def is_overdue(self):
         """check if task is overdue"""
@@ -83,3 +87,32 @@ class Task(db.Model):
     
     def __repr__(self):
         return f'<Task {self.title}>'
+
+class TaskComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    
+    author = db.relationship('User', backref='comments')
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    message = db.Column(db.String(256), nullable=False)
+    is_read = db.Column(db.Boolean, default=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='notifications')
+
+class TimeLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    start_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=True)
+    duration = db.Column(db.Integer, default=0)  # duration in seconds
+    
+    task = db.relationship('Task', backref=db.backref('time_logs', cascade='all, delete-orphan'))
+    user = db.relationship('User', backref='time_logs')

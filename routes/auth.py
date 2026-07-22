@@ -80,14 +80,35 @@ def signup():
 def logout():
     logout_user()
     flash('Logged out', 'success')
-    return redirect(url_for('auth.login'))
+@auth_bp.route('/demo-login', methods=['POST'])
+def demo_login():
+    demo_user = User.query.filter_by(email="demo@taskpulse.com").first()
+    if not demo_user:
+        try:
+            demo_user = User(
+                username="DemoAdmin",
+                email="demo@taskpulse.com",
+                password_hash=generate_password_hash("demo123"),
+                role='admin'
+            )
+            db.session.add(demo_user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash("Could not create demo user", "error")
+            return redirect(url_for('auth.login'))
+            
+    login_user(demo_user)
+    flash('Logged in as Demo Admin!', 'success')
+    return redirect(url_for('dashboard.dashboard'))
 
 @auth_bp.before_app_request
 def update_last_active():
-    """Update last_active timestamp on every request for logged-in users"""
+    """Update last_active timestamp on every request for logged-in users, throttled to 5 minutes"""
     if current_user.is_authenticated:
         try:
-            current_user.last_active = datetime.utcnow()
-            db.session.commit()
+            if not current_user.last_active or (datetime.utcnow() - current_user.last_active).total_seconds() > 300:
+                current_user.last_active = datetime.utcnow()
+                db.session.commit()
         except:
             pass

@@ -1,4 +1,4 @@
-# 🚀 Ethara.ai – Smart Work Management System
+# 🚀 TaskPulse – Smart Work Management System
 
 A clean, role-based team task management web application built with **Flask** and **SQLAlchemy**. Designed for small teams to manage projects, assign tasks, and track progress.
 
@@ -63,7 +63,7 @@ A clean, role-based team task management web application built with **Flask** an
 ## 📂 Project Structure
 
 ```
-ethara/
+taskpulse/
 ├── app.py                 # App factory, error handlers, auto-migration
 ├── extensions.py          # SQLAlchemy & LoginManager init
 ├── models.py              # User, Project, Task models
@@ -131,4 +131,4 @@ This project is for educational purposes.
 
 ---
 
-Built with ❤️ using Flask | **Ethara.ai**
+Built with ❤️ using Flask | **TaskPulse**
