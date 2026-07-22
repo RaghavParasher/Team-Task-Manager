@@ -23,7 +23,7 @@ def dashboard():
         completed = db.session.query(db.func.count(Task.id)).filter_by(assigned_to=current_user.id, status='completed').scalar()
         in_progress = db.session.query(db.func.count(Task.id)).filter_by(assigned_to=current_user.id, status='in_progress').scalar()
         pending = db.session.query(db.func.count(Task.id)).filter_by(assigned_to=current_user.id, status='pending').scalar()
-        overdue = db.session.query(db.func.count(Task.id)).filter(Task.assigned_to=current_user.id, Task.status != 'completed', Task.due_date < date.today()).scalar()
+        overdue = db.session.query(db.func.count(Task.id)).filter(Task.assigned_to == current_user.id, Task.status != 'completed', Task.due_date < date.today()).scalar()
         projects = current_user.projects
         recent_tasks = Task.query.filter_by(assigned_to=current_user.id).order_by(Task.created_at.desc()).limit(5).all()
     
