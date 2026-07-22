@@ -225,7 +225,11 @@ def delete_task(task_id):
         flash('Only admins can delete tasks', 'error')
         return redirect(url_for('tasks.list_tasks'))
     
-    task = Task.query.get_or_404(task_id)
+    task = Task.query.get(task_id)
+    if not task:
+        flash('Task deleted', 'success')
+        return redirect(url_for('projects.list_projects'))
+        
     proj_id = task.project_id
     
     try:

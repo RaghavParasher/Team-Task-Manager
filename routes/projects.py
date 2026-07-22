@@ -99,7 +99,10 @@ def delete_project(project_id):
         flash('Only admins can delete projects', 'error')
         return redirect(url_for('projects.list_projects'))
     
-    project = Project.query.get_or_404(project_id)
+    project = Project.query.get(project_id)
+    if not project:
+        flash('Project deleted', 'success')
+        return redirect(url_for('projects.list_projects'))
     
     try:
         db.session.delete(project)
