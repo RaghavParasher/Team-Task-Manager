@@ -236,4 +236,7 @@ def delete_task(task_id):
         db.session.rollback()
         flash('Could not delete task', 'error')
     
-    return redirect(url_for('projects.view_project', project_id=proj_id))
+    # Check if project exists before redirecting (resilient to Vercel SQLite wipes)
+    if Project.query.get(proj_id):
+        return redirect(url_for('projects.view_project', project_id=proj_id))
+    return redirect(url_for('projects.list_projects'))
