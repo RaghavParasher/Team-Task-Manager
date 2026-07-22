@@ -1,4 +1,4 @@
-// Ethara.ai - App JS
+// TaskPulse - App JS
 
 document.addEventListener('DOMContentLoaded', function() {
     

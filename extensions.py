@@ -1,4 +1,5 @@
-# extensions - keep db and login_manager here to avoid circular imports
+# TaskPulse Extensions Configuration
+# Keep db and login_manager here to avoid circular imports
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 

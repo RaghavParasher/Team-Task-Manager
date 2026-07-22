@@ -1,3 +1,4 @@
+# TaskPulse Git Ignore Configuration
 *.pyc
 __pycache__/
 instance/
