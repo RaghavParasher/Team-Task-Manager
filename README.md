@@ -98,8 +98,8 @@ taskpulse/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/harshkr04/Team-Tracker.git
-cd Team-Tracker
+git clone https://github.com/RaghavParasher/Team-Task-Manager.git
+cd Team-Task-Manager
 ```
 
 ### 2. Install dependencies
