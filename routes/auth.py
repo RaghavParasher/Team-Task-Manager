@@ -78,13 +78,17 @@ def signup():
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    db.session.rollback()
     logout_user()
     flash('Logged out', 'success')
+    return redirect(url_for('auth.login'))
+
 @auth_bp.route('/demo-login', methods=['POST'])
 def demo_login():
     demo_user = User.query.filter_by(email="demo@taskpulse.com").first()
     if not demo_user:
         try:
+            # Create Demo Admin
             demo_user = User(
                 username="DemoAdmin",
                 email="demo@taskpulse.com",
@@ -93,13 +97,124 @@ def demo_login():
             )
             db.session.add(demo_user)
             db.session.commit()
+            
+            # Create Bob and Alice members
+            alice = User(
+                username="Alice",
+                email="alice@taskpulse.com",
+                password_hash=generate_password_hash("member123"),
+                role='member'
+            )
+            bob = User(
+                username="Bob",
+                email="bob@taskpulse.com",
+                password_hash=generate_password_hash("member123"),
+                role='member'
+            )
+            db.session.add_all([alice, bob])
+            db.session.commit()
+            
+            # Create Project
+            from models import Project, Task, TaskComment, TimeLog, Notification
+            project = Project(
+                name="✨ Website Redesign",
+                description="Modernizing our landing page and developer dashboard with TaskPulse.",
+                created_by=demo_user.id
+            )
+            project.members.append(demo_user)
+            project.members.append(alice)
+            project.members.append(bob)
+            db.session.add(project)
+            db.session.commit()
+            
+            # Create Tasks
+            task1 = Task(
+                title="Design modern homepage mockups",
+                description="Create high-fidelity landing page designs in Figma matching the new branding.",
+                status="completed",
+                priority="high",
+                project_id=project.id,
+                assigned_to=alice.id
+            )
+            task2 = Task(
+                title="Implement Auth and API endpoints",
+                description="Write secure backend authentication handlers and hybrid REST APIs.",
+                status="in_progress",
+                priority="high",
+                project_id=project.id,
+                assigned_to=bob.id
+            )
+            task3 = Task(
+                title="Setup database indexes & migrations",
+                description="Add indices for foreign key attributes to speed up dashboard queries.",
+                status="pending",
+                priority="medium",
+                project_id=project.id,
+                assigned_to=demo_user.id
+            )
+            task4 = Task(
+                title="Draft developer API documentation",
+                description="Create clear markdown instructions detailing how to consume tasks endpoints.",
+                status="pending",
+                priority="low",
+                project_id=project.id,
+                assigned_to=alice.id
+            )
+            db.session.add_all([task1, task2, task3, task4])
+            db.session.commit()
+            
+            # Create Time Logs
+            from datetime import timedelta
+            log1 = TimeLog(
+                task_id=task1.id,
+                user_id=alice.id,
+                start_time=datetime.utcnow() - timedelta(hours=4),
+                end_time=datetime.utcnow() - timedelta(hours=1),
+                duration=10800
+            )
+            log2 = TimeLog(
+                task_id=task2.id,
+                user_id=bob.id,
+                start_time=datetime.utcnow() - timedelta(hours=2),
+                end_time=datetime.utcnow() - timedelta(minutes=30),
+                duration=5400
+            )
+            db.session.add_all([log1, log2])
+            
+            # Create Comments
+            comment1 = TaskComment(
+                content="Homepage designs are completed! Shared Figma link in slack.",
+                task_id=task1.id,
+                user_id=alice.id
+            )
+            comment2 = TaskComment(
+                content="Working on resolving Gunicorn worker session timeouts.",
+                task_id=task2.id,
+                user_id=bob.id
+            )
+            db.session.add_all([comment1, comment2])
+            
+            # Create Notifications
+            notif1 = Notification(
+                user_id=demo_user.id,
+                message="Figma designs for 'Website Redesign' have been uploaded by Alice."
+            )
+            notif2 = Notification(
+                user_id=demo_user.id,
+                message="Bob started work on 'Implement Auth and API endpoints'."
+            )
+            db.session.add_all([notif1, notif2])
+            
+            db.session.commit()
+            
         except Exception as e:
             db.session.rollback()
-            flash("Could not create demo user", "error")
+            flash("Could not create demo user or dummy data", "error")
+            print(f"Demo seed error: {e}")
             return redirect(url_for('auth.login'))
             
     login_user(demo_user)
-    flash('Logged in as Demo Admin!', 'success')
+    flash('Logged in as Demo Admin with sample data!', 'success')
     return redirect(url_for('dashboard.dashboard'))
 
 @auth_bp.before_app_request
@@ -111,4 +226,4 @@ def update_last_active():
                 current_user.last_active = datetime.utcnow()
                 db.session.commit()
         except:
-            pass
+            db.session.rollback()

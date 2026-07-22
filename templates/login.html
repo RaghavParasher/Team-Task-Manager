@@ -1,11 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Login - Team Tracker{% endblock %}
+{% block title %}Login - TaskPulse{% endblock %}
 
 {% block content %}
+<style>
+    /* Pulse glow effect for the demo login button */
+    .btn-demo-pulse {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 14px;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        transition: transform 0.2s, box-shadow 0.2s;
+        animation: pulse-glow 2s infinite;
+    }
+    .btn-demo-pulse:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    }
+    .btn-demo-pulse:active {
+        transform: translateY(1px);
+    }
+    
+    @keyframes pulse-glow {
+        0% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+        }
+    }
+    
+    .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 20px 0;
+        color: #9ca3af;
+        font-size: 0.85rem;
+    }
+    .divider::before, .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .divider:not(:empty)::before {
+        margin-right: .5em;
+    }
+    .divider:not(:empty)::after {
+        margin-left: .5em;
+    }
+</style>
+
 <div class="auth-container">
     <div class="auth-card">
-        <h1>TaskPulse</h1>
-        <p class="auth-subtitle">Smart Work Management System</p>
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: #111827; margin-bottom: 4px;">TaskPulse</h1>
+        <p class="auth-subtitle" style="margin-bottom: 24px;">Smart Work Management System</p>
+        
+        <!-- Large visual Guest Demo Login at the top -->
+        <form method="POST" action="{{ url_for('auth.demo_login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-demo-pulse">
+                ⚡ Fast Demo Guest Login
+            </button>
+        </form>
+        
+        <div class="divider">or sign in with email</div>
         
         <form method="POST" action="{{ url_for('auth.login') }}" onsubmit="return validateLogin()">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -19,15 +91,10 @@
                 <input type="password" id="password" name="password" required placeholder="Enter password">
             </div>
             
-            <button type="submit" class="btn btn-primary btn-full">Log In</button>
-        </form>
-
-        <form method="POST" action="{{ url_for('auth.demo_login') }}" style="margin-top: 12px; margin-bottom: 12px;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-full" style="background-color: #6b7280; border: none; color: white; cursor: pointer; padding: 10px; border-radius: 6px; font-weight: 500;">⚡ Demo Guest Login</button>
+            <button type="submit" class="btn btn-primary btn-full" style="padding: 12px;">Log In</button>
         </form>
         
-        <p class="auth-footer">
+        <p class="auth-footer" style="margin-top: 20px;">
             Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up here</a>
         </p>
     </div>
