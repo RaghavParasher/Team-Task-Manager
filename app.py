@@ -174,10 +174,12 @@ def _auto_migrate(app):
         conn.close()
 
 def _create_default_admin(app):
-    """create a default admin account so we can test easily"""
-    from models import User
+    """create default admin and demo user accounts and seed mock data so the app is populated out of the box"""
+    from models import User, Project, Task, TaskComment, TimeLog, Notification
     from werkzeug.security import generate_password_hash
+    from datetime import datetime, timedelta
     
+    # 1. Default Admin
     if not User.query.filter_by(email='admin@taskpulse.com').first():
         admin = User(
             username='admin',
@@ -188,6 +190,129 @@ def _create_default_admin(app):
         db.session.add(admin)
         db.session.commit()
         print("Created default admin account")
+        
+    # 2. Demo Admin & Sample Data
+    demo_user = User.query.filter_by(email='demo@taskpulse.com').first()
+    if not demo_user:
+        try:
+            demo_user = User(
+                username="DemoAdmin",
+                email="demo@taskpulse.com",
+                password_hash=generate_password_hash("demo123"),
+                role='admin'
+            )
+            db.session.add(demo_user)
+            db.session.commit()
+            
+            alice = User(
+                username="Alice",
+                email="alice@taskpulse.com",
+                password_hash=generate_password_hash("member123"),
+                role='member'
+            )
+            bob = User(
+                username="Bob",
+                email="bob@taskpulse.com",
+                password_hash=generate_password_hash("member123"),
+                role='member'
+            )
+            db.session.add_all([alice, bob])
+            db.session.commit()
+            
+            # Project
+            project = Project(
+                name="✨ Website Redesign",
+                description="Modernizing our landing page and developer dashboard with TaskPulse.",
+                created_by=demo_user.id
+            )
+            project.members.append(demo_user)
+            project.members.append(alice)
+            project.members.append(bob)
+            db.session.add(project)
+            db.session.commit()
+            
+            # Tasks
+            task1 = Task(
+                title="Design modern homepage mockups",
+                description="Create high-fidelity landing page designs in Figma matching the new branding.",
+                status="completed",
+                priority="high",
+                project_id=project.id,
+                assigned_to=alice.id
+            )
+            task2 = Task(
+                title="Implement Auth and API endpoints",
+                description="Write secure backend authentication handlers and hybrid REST APIs.",
+                status="in_progress",
+                priority="high",
+                project_id=project.id,
+                assigned_to=bob.id
+            )
+            task3 = Task(
+                title="Setup database indexes & migrations",
+                description="Add indices for foreign key attributes to speed up dashboard queries.",
+                status="pending",
+                priority="medium",
+                project_id=project.id,
+                assigned_to=demo_user.id
+            )
+            task4 = Task(
+                title="Draft developer API documentation",
+                description="Create clear markdown instructions detailing how to consume tasks endpoints.",
+                status="pending",
+                priority="low",
+                project_id=project.id,
+                assigned_to=alice.id
+            )
+            db.session.add_all([task1, task2, task3, task4])
+            db.session.commit()
+            
+            # Time logs
+            log1 = TimeLog(
+                task_id=task1.id,
+                user_id=alice.id,
+                start_time=datetime.utcnow() - timedelta(hours=4),
+                end_time=datetime.utcnow() - timedelta(hours=1),
+                duration=10800
+            )
+            log2 = TimeLog(
+                task_id=task2.id,
+                user_id=bob.id,
+                start_time=datetime.utcnow() - timedelta(hours=2),
+                end_time=datetime.utcnow() - timedelta(minutes=30),
+                duration=5400
+            )
+            db.session.add_all([log1, log2])
+            
+            # Comments
+            comment1 = TaskComment(
+                content="Homepage designs are completed! Shared Figma link in slack.",
+                task_id=task1.id,
+                user_id=alice.id
+            )
+            comment2 = TaskComment(
+                content="Working on resolving Gunicorn worker session timeouts.",
+                task_id=task2.id,
+                user_id=bob.id
+            )
+            db.session.add_all([comment1, comment2])
+            
+            # Notifications
+            notif1 = Notification(
+                user_id=demo_user.id,
+                message="Figma designs for 'Website Redesign' have been uploaded by Alice."
+            )
+            notif2 = Notification(
+                user_id=demo_user.id,
+                message="Bob started work on 'Implement Auth and API endpoints'."
+            )
+            db.session.add_all([notif1, notif2])
+            
+            db.session.commit()
+            print("Successfully seeded all demo and dummy data on startup.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Startup seeding failed: {e}")
 
 app = create_app()
 
