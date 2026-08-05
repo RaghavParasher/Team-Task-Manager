@@ -8,6 +8,10 @@
 
 **TaskPulse** is a premium, responsive, role-based work management platform designed for teams to organize projects, assign tasks, log working hours, and track deliverables in real-time.
 
+<br/>
+<img src="./mockup.jpg" width="100%" alt="TaskPulse Dashboard Mockup" />
+<br/>
+
 ---
 
 ## 🔗 Live Application & Demo Access
